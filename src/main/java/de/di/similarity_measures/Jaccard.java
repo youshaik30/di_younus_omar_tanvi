@@ -4,8 +4,6 @@ import de.di.similarity_measures.helper.Tokenizer;
 import lombok.AllArgsConstructor;
 
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @AllArgsConstructor
 public class Jaccard implements SimilarityMeasure {
@@ -53,7 +51,54 @@ public class Jaccard implements SimilarityMeasure {
         // semantics consider them during the calculation. The solution should be able to calculate the Jaccard       //
         // similarity either of the two semantics by respecting the inner bagSemantics flag.                          //
 
+        // Handle edge case where both token arrays are empty
+        if (strings1.length == 0 && strings2.length == 0) {
+            return 1.0;
+        }
 
+        if (this.bagSemantics) {
+            // MULTISET (BAG) SEMANTICS
+            // Maximum Jaccard similarity is 1/2. Formula: |A ∩ B| / (|A| + |B|)
+            // Intersection size is the sum of the minimum frequencies of shared tokens.
+            Map<String, Integer> counts1 = new HashMap<>();
+            for (String s : strings1) {
+                counts1.put(s, counts1.getOrDefault(s, 0) + 1);
+            }
+
+            Map<String, Integer> counts2 = new HashMap<>();
+            for (String s : strings2) {
+                counts2.put(s, counts2.getOrDefault(s, 0) + 1);
+            }
+
+            int intersectionSize = 0;
+            for (String key : counts1.keySet()) {
+                if (counts2.containsKey(key)) {
+                    intersectionSize += Math.min(counts1.get(key), counts2.get(key));
+                }
+            }
+
+            int totalSize = strings1.length + strings2.length;
+            jaccardSimilarity = totalSize == 0 ? 1.0 : (double) intersectionSize / totalSize;
+
+        } else {
+            // SET SEMANTICS
+            // Maximum Jaccard similarity is 1. Formula: |A ∩ B| / |A ∪ B|
+            // Duplicates are strictly removed.
+            Set<String> set1 = new HashSet<>(Arrays.asList(strings1));
+            Set<String> set2 = new HashSet<>(Arrays.asList(strings2));
+
+            if (set1.isEmpty() && set2.isEmpty()) {
+                return 1.0;
+            }
+
+            Set<String> intersection = new HashSet<>(set1);
+            intersection.retainAll(set2);
+
+            Set<String> union = new HashSet<>(set1);
+            union.addAll(set2);
+
+            jaccardSimilarity = (double) intersection.size() / union.size();
+        }
 
         //                                                                                                            //
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
