@@ -4,7 +4,6 @@ import de.di.similarity_measures.helper.MinHash;
 import de.di.similarity_measures.helper.Tokenizer;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class LocalitySensitiveHashing implements SimilarityMeasure {
@@ -24,12 +23,6 @@ public class LocalitySensitiveHashing implements SimilarityMeasure {
 
     /**
      * Calculates the LSH similarity of the two input strings.
-     * The LHS algorithm calculates the LHS signatures by first tokenizing the input strings and then applying its
-     * internal MinHash functions to the tokenized strings. Then, it uses the two signatures to approximate the Jaccard
-     * similarity of the two strings with their signatures by simply applying the Jaccard algorithm on the two signatures.
-     * @param string1 The first string argument for the similarity calculation.
-     * @param string2 The second string argument for the similarity calculation.
-     * @return The LSH similarity (= Jaccard approximation) of the two arguments.
      */
     @Override
     public double calculate(final String string1, final String string2) {
@@ -40,12 +33,6 @@ public class LocalitySensitiveHashing implements SimilarityMeasure {
 
     /**
      * Calculates the LSH similarity of the two input string arrays.
-     * The LHS algorithm calculates the LHS signatures by applying its internal MinHash functions to the two input string
-     * lists. Then, it uses the two signatures to approximate the Jaccard similarity of the two strings with their
-     * signatures by simply applying the Jaccard algorithm on the two signatures.
-     * @param strings1 The first string argument for the similarity calculation.
-     * @param strings2 The second string argument for the similarity calculation.
-     * @return The LSH similarity (= Jaccard approximation) of the two arguments.
      */
     @Override
     public double calculate(final String[] strings1, final String[] strings2) {
@@ -57,14 +44,25 @@ public class LocalitySensitiveHashing implements SimilarityMeasure {
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //                                      DATA INTEGRATION ASSIGNMENT                                           //
-        // Calculate the two signatures by using the internal MinHash functions. Then, use the signatures to          //
-        // approximate the Jaccard similarity.                                                                        //
 
+        // Step 1: Calculate the two signatures using the internal MinHash functions
+        for (int i = 0; i < k; i++) {
+            signature1[i] = this.minHashFunctions.get(i).hash(strings1);
+            signature2[i] = this.minHashFunctions.get(i).hash(strings2);
+        }
 
+        // Step 2: Use the signatures to approximate the Jaccard similarity.
+        // For LSH, the approximated Jaccard similarity is the fraction of positional matches.
+        int matches = 0;
+        for (int i = 0; i < k; i++) {
+            if (signature1[i].equals(signature2[i])) {
+                matches++;
+            }
+        }
+        lshJaccard = (double) matches / k;
 
         //                                                                                                            //
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
         return lshJaccard;
     }
 }
