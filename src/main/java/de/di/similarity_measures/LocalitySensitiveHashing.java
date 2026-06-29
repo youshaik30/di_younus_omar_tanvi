@@ -9,10 +9,7 @@ import java.util.List;
 
 public class LocalitySensitiveHashing implements SimilarityMeasure {
 
-    // The tokenizer that is used to transform string inputs into token lists.
     private final Tokenizer tokenizer;
-
-    // The MinHash functions that are used to calculate the LSH signatures.
     private final List<MinHash> minHashFunctions;
 
     public LocalitySensitiveHashing(final Tokenizer tokenizer, final int numHashFunctions) {
@@ -22,15 +19,6 @@ public class LocalitySensitiveHashing implements SimilarityMeasure {
             this.minHashFunctions.add(new MinHash(i));
     }
 
-    /**
-     * Calculates the LSH similarity of the two input strings.
-     * The LHS algorithm calculates the LHS signatures by first tokenizing the input strings and then applying its
-     * internal MinHash functions to the tokenized strings. Then, it uses the two signatures to approximate the Jaccard
-     * similarity of the two strings with their signatures by simply applying the Jaccard algorithm on the two signatures.
-     * @param string1 The first string argument for the similarity calculation.
-     * @param string2 The second string argument for the similarity calculation.
-     * @return The LSH similarity (= Jaccard approximation) of the two arguments.
-     */
     @Override
     public double calculate(final String string1, final String string2) {
         String[] strings1 = this.tokenizer.tokenize(string1);
@@ -38,15 +26,6 @@ public class LocalitySensitiveHashing implements SimilarityMeasure {
         return this.calculate(strings1, strings2);
     }
 
-    /**
-     * Calculates the LSH similarity of the two input string arrays.
-     * The LHS algorithm calculates the LHS signatures by applying its internal MinHash functions to the two input string
-     * lists. Then, it uses the two signatures to approximate the Jaccard similarity of the two strings with their
-     * signatures by simply applying the Jaccard algorithm on the two signatures.
-     * @param strings1 The first string argument for the similarity calculation.
-     * @param strings2 The second string argument for the similarity calculation.
-     * @return The LSH similarity (= Jaccard approximation) of the two arguments.
-     */
     @Override
     public double calculate(final String[] strings1, final String[] strings2) {
         double lshJaccard = 0;
@@ -57,10 +36,22 @@ public class LocalitySensitiveHashing implements SimilarityMeasure {
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //                                      DATA INTEGRATION ASSIGNMENT                                           //
-        // Calculate the two signatures by using the internal MinHash functions. Then, use the signatures to          //
-        // approximate the Jaccard similarity.                                                                        //
 
+        // apply each MinHash function to both token arrays to build the two signatures
+        for (int i = 0; i < k; i++) {
+            signature1[i] = this.minHashFunctions.get(i).hash(strings1);
+            signature2[i] = this.minHashFunctions.get(i).hash(strings2);
+        }
 
+        // count how many positions agree between the two signatures
+        // the fraction of agreements is the LSH estimate of Jaccard similarity
+        int matches = 0;
+        for (int i = 0; i < k; i++) {
+            if (signature1[i].equals(signature2[i])) {
+                matches++;
+            }
+        }
+        lshJaccard = (k == 0) ? 0.0 : (double) matches / k;
 
         //                                                                                                            //
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////

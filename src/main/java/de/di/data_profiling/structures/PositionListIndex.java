@@ -56,7 +56,6 @@ public class PositionListIndex {
     public PositionListIndex intersect(PositionListIndex other) {
         List<IntArrayList> clustersIntersection = this.intersect(this.clusters, other.getInvertedClusters());
         AttributeList attributesUnion = this.attributes.union(other.getAttributes());
-
         return new PositionListIndex(attributesUnion, clustersIntersection, this.relationLength());
     }
 
@@ -65,11 +64,29 @@ public class PositionListIndex {
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //                                      DATA INTEGRATION ASSIGNMENT                                           //
-        // Calculate the intersection of one PLI's clusters and another PLI's (conveniently already inverted)         //
-        // invertedClusters. The clustersIntersection is a new list that stores the intersection result. Note that    //
-        // the clusters are "Stripped Partitions", which means that only clusters of size >1 are part of the result.  //
 
+        // for each cluster in this PLI, split rows by which cluster they belong to in the other PLI
+        for (IntArrayList cluster : clusters) {
+            // temp map: cluster ID in the other PLI → rows that share that cluster
+            Map<Integer, IntArrayList> temp = new HashMap<>();
 
+            for (int row : cluster) {
+                int otherId = invertedClusters[row];
+                if (otherId == -1) continue; // row is unique in the other PLI, skip
+
+                if (!temp.containsKey(otherId)) {
+                    temp.put(otherId, new IntArrayList());
+                }
+                temp.get(otherId).add(row);
+            }
+
+            // only keep groups of size > 1 (stripped partition)
+            for (IntArrayList group : temp.values()) {
+                if (group.size() > 1) {
+                    clustersIntersection.add(group);
+                }
+            }
+        }
 
         //                                                                                                            //
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////

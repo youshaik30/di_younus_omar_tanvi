@@ -8,27 +8,48 @@ import java.util.stream.Collectors;
 
 public class INDProfiler {
 
-    /**
-     * Discovers all non-trivial unary (and n-ary) inclusion dependencies in the provided relations.
-     * @param relations The relations that should be profiled for inclusion dependencies.
-     * @return The list of all non-trivial unary (and n-ary) inclusion dependencies in the provided relations.
-     */
     public List<IND> profile(List<Relation> relations, boolean discoverNary) {
         List<IND> inclusionDependencies = new ArrayList<>();
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //                                      DATA INTEGRATION ASSIGNMENT                                           //
-        // Discover all inclusion dependencies and return them in inclusion dependencies list. The boolean flag       //
-        // discoverNary indicates, whether only unary or both unary and n-ary INDs should be discovered. To solve     //
-        // this assignment, only unary INDs need to be discovered. Discovering also n-ary INDs is optional.           //
 
+        // pre-compute value sets for every column in every relation
+        List<List<Set<String>>> allColumnSets = new ArrayList<>();
+        for (Relation relation : relations) {
+            allColumnSets.add(toColumnSets(relation.getColumns()));
+        }
 
+        // check every pair of (relation, column) for an IND
+        // R1.c1 ⊆ R2.c2 if every value in c1 also appears in c2
+        for (int r1 = 0; r1 < relations.size(); r1++) {
+            int numCols1 = relations.get(r1).getAttributes().length;
+
+            for (int c1 = 0; c1 < numCols1; c1++) {
+                Set<String> set1 = allColumnSets.get(r1).get(c1);
+
+                for (int r2 = 0; r2 < relations.size(); r2++) {
+                    int numCols2 = relations.get(r2).getAttributes().length;
+
+                    for (int c2 = 0; c2 < numCols2; c2++) {
+                        // skip trivial case: same column in same relation
+                        if (r1 == r2 && c1 == c2) continue;
+
+                        Set<String> set2 = allColumnSets.get(r2).get(c2);
+
+                        // if every value of c1 appears in c2, we have an IND
+                        if (set2.containsAll(set1)) {
+                            inclusionDependencies.add(new IND(relations.get(r1), c1, relations.get(r2), c2));
+                        }
+                    }
+                }
+            }
+        }
 
         //                                                                                                            //
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         if (discoverNary)
-            // Here, the lattice search would start if n-ary IND discovery would be supported.
             throw new RuntimeException("Sorry, n-ary IND discovery is not supported by this solution.");
 
         return inclusionDependencies;
