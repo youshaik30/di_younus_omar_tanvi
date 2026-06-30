@@ -7,12 +7,6 @@ import java.util.Arrays;
 
 public class SecondLineSchemaMatcher {
 
-    /**
-     * Translates the provided similarity matrix into a binary correspondence matrix by selecting possibly optimal
-     * attribute correspondences from the similarities.
-     * @param similarityMatrix A matrix of pair-wise attribute similarities.
-     * @return A CorrespondenceMatrix of pair-wise attribute correspondences.
-     */
     public CorrespondenceMatrix match(SimilarityMatrix similarityMatrix) {
         double[][] simMatrix = similarityMatrix.getMatrix();
 
@@ -20,10 +14,87 @@ public class SecondLineSchemaMatcher {
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //                                      DATA INTEGRATION ASSIGNMENT                                           //
-        // Translate the similarity matrix into a binary correlation matrix by implementing either the StableMarriage //
-        // algorithm or the Hungarian method.                                                                         //
 
+        int numSources = simMatrix.length;
+        int numTargets = simMatrix[0].length;
 
+        // Step 1: build source preferences
+        // for each source, rank all targets by similarity (highest first)
+        int[][] sourcePrefs = new int[numSources][numTargets];
+        for (int i = 0; i < numSources; i++) {
+            for (int j = 0; j < numTargets; j++) sourcePrefs[i][j] = j;
+            // selection sort: find highest similarity target at each position
+            for (int a = 0; a < numTargets - 1; a++) {
+                for (int b = a + 1; b < numTargets; b++) {
+                    if (simMatrix[i][sourcePrefs[i][b]] > simMatrix[i][sourcePrefs[i][a]]) {
+                        int tmp = sourcePrefs[i][a];
+                        sourcePrefs[i][a] = sourcePrefs[i][b];
+                        sourcePrefs[i][b] = tmp;
+                    }
+                }
+            }
+        }
+
+        // Step 2: build target ranks
+        // for each target, store the rank of each source (lower rank = more preferred)
+        int[][] targetRanks = new int[numTargets][numSources];
+        for (int j = 0; j < numTargets; j++) {
+            int[] order = new int[numSources];
+            for (int i = 0; i < numSources; i++) order[i] = i;
+            // selection sort: find highest similarity source at each position
+            for (int a = 0; a < numSources - 1; a++) {
+                for (int b = a + 1; b < numSources; b++) {
+                    if (simMatrix[order[b]][j] > simMatrix[order[a]][j]) {
+                        int tmp = order[a];
+                        order[a] = order[b];
+                        order[b] = tmp;
+                    }
+                }
+            }
+            // store the rank of each source for this target
+            for (int rank = 0; rank < numSources; rank++) {
+                targetRanks[j][order[rank]] = rank;
+            }
+        }
+
+        // Step 3: Stable Marriage (Gale-Shapley) algorithm, source-proposing
+        int[] sourceMatch  = new int[numSources];  // sourceMatch[i]  = target matched to source i, or -1
+        int[] targetMatch  = new int[numTargets];  // targetMatch[j]  = source matched to target j, or -1
+        int[] nextProposal = new int[numSources];  // next preference index each source will propose to
+        Arrays.fill(sourceMatch, -1);
+        Arrays.fill(targetMatch, -1);
+
+        while (true) {
+            boolean madeProposal = false;
+
+            for (int i = 0; i < numSources; i++) {
+                if (sourceMatch[i] != -1) continue;          // source already matched
+                if (nextProposal[i] >= numTargets) continue; // source exhausted all options
+
+                madeProposal = true;
+                int target = sourcePrefs[i][nextProposal[i]++]; // propose to next preferred target
+
+                if (targetMatch[target] == -1) {
+                    // target is free, accept
+                    sourceMatch[i] = target;
+                    targetMatch[target] = i;
+                } else {
+                    // target is taken, check if it prefers the new source over its current match
+                    int rival = targetMatch[target];
+                    if (targetRanks[target][i] < targetRanks[target][rival]) {
+                        // target prefers new source, swap
+                        sourceMatch[i] = target;
+                        targetMatch[target] = i;
+                        sourceMatch[rival] = -1; // rival is now unmatched
+                    }
+                    // else: target keeps its current match, source i will try next preference
+                }
+            }
+
+            if (!madeProposal) break; // all sources are matched or have no more options
+        }
+
+        corrMatrix = assignmentArray2correlationMatrix(sourceMatch, simMatrix);
 
         //                                                                                                            //
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -31,13 +102,6 @@ public class SecondLineSchemaMatcher {
         return new CorrespondenceMatrix(corrMatrix, similarityMatrix.getSourceRelation(), similarityMatrix.getTargetRelation());
     }
 
-    /**
-     * Translate an array of source assignments into a correlation matrix. For example, [0,3,2] maps 0->1, 1->3, 2->2
-     * and, therefore, translates into [[1,0,0,0][0,0,0,1][0,0,1,0]].
-     * @param sourceAssignments The list of source assignments.
-     * @param simMatrix The original similarity matrix; just used to determine the number of source and target attributes.
-     * @return The correlation matrix extracted form the source assignments.
-     */
     private int[][] assignmentArray2correlationMatrix(int[] sourceAssignments, double[][] simMatrix) {
         int[][] corrMatrix = new int[simMatrix.length][];
         for (int i = 0; i < simMatrix.length; i++) {
