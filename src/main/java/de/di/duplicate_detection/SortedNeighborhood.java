@@ -30,39 +30,22 @@ public class SortedNeighborhood {
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //                                      DATA INTEGRATION ASSIGNMENT                                           //
 
-        // remember pairs we already compared, so we don't compare the same pair twice
-        // (overlapping windows and multiple sorting keys create a lot of repeats)
-        Set<Long> comparedPairs = new HashSet<>();
+        // do one Sorted Neighborhood run for each sorting key
+        for (int k = 0; k < sortingKeys.length; k++) {
+            final int key = sortingKeys[k];
 
-        // run the Sorted Neighborhood Method once for each sorting key
-        for (int key : sortingKeys) {
-            // sort the records by the value in the current sorting key column
+            // sort the records by the value in the sorting key column
             Record[] sorted = records.clone();
-            Arrays.sort(sorted, new Comparator<Record>() {
-                @Override
-                public int compare(Record r1, Record r2) {
-                    return r1.getValues()[key].compareTo(r2.getValues()[key]);
-                }
-            });
+            Arrays.sort(sorted, (r1, r2) -> r1.getValues()[key].compareTo(r2.getValues()[key]));
 
-            // slide a window of size windowSize over the sorted records
+            // slide a window over the sorted records and compare records inside the window
             for (int i = 0; i < sorted.length; i++) {
                 for (int j = i + 1; j < i + windowSize && j < sorted.length; j++) {
-                    int idx1 = sorted[i].getIndex();
-                    int idx2 = sorted[j].getIndex();
-
-                    // make a unique key for this pair (smaller index first)
-                    int lo = Math.min(idx1, idx2);
-                    int hi = Math.max(idx1, idx2);
-                    long pairKey = (long) lo * records.length + hi;
-
-                    // skip if this pair was already compared before
-                    if (!comparedPairs.add(pairKey))
-                        continue;
-
                     double sim = recordComparator.compare(sorted[i].getValues(), sorted[j].getValues());
 
                     if (recordComparator.isDuplicate(sim)) {
+                        int idx1 = sorted[i].getIndex();
+                        int idx2 = sorted[j].getIndex();
                         duplicates.add(new Duplicate(idx1, idx2, sim, relation));
                     }
                 }
@@ -82,10 +65,15 @@ public class SortedNeighborhood {
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //                                      DATA INTEGRATION ASSIGNMENT                                           //
 
-        // simple heuristic: compare every attribute with Levenshtein, equal weights, moderate threshold
-        for (int i = 0; i < relation.getAttributes().length; i++) {
-            attrSimWeights.add(new AttrSimWeight(i, new Levenshtein(true), 1.0));
-        }
+        // compare the meaningful text columns (skip column 0 because it is a unique id)
+        attrSimWeights.add(new AttrSimWeight(1, new Levenshtein(true), 0.1));
+        attrSimWeights.add(new AttrSimWeight(2, new Levenshtein(true), 0.1));
+        attrSimWeights.add(new AttrSimWeight(3, new Jaccard(new Tokenizer(3, true), false), 0.2));
+        attrSimWeights.add(new AttrSimWeight(4, new Levenshtein(true), 0.1));
+        attrSimWeights.add(new AttrSimWeight(5, new Levenshtein(true), 0.1));
+        attrSimWeights.add(new AttrSimWeight(6, new Jaccard(new Tokenizer(3, true), false), 0.1));
+        attrSimWeights.add(new AttrSimWeight(7, new Levenshtein(true), 0.1));
+        attrSimWeights.add(new AttrSimWeight(8, new Levenshtein(true), 0.2));
         threshold = 0.8;
 
         //                                                                                                            //
