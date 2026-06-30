@@ -9,39 +9,45 @@ import java.util.Set;
 public class TransitiveClosure {
 
     public Set<Duplicate> calculate(Set<Duplicate> duplicates) {
-        Set<Duplicate> closedDuplicates = new HashSet<>(2 * duplicates.size());
+        Set<Duplicate> closedDuplicates = new HashSet<>();
 
-        if (duplicates.size() <= 1)
+        if (duplicates == null || duplicates.size() <= 1) {
             return duplicates;
+        }
 
         Relation relation = duplicates.iterator().next().getRelation();
-        int numRecords = relation.getRecords().length;
+        int numberOfRecords = relation.getRecords().length;
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //                                      DATA INTEGRATION ASSIGNMENT                                           //
 
-        // build an adjacency matrix from the duplicate pairs
-        boolean[][] matrix = new boolean[numRecords][numRecords];
-        for (Duplicate d : duplicates) {
-            matrix[d.getIndex1()][d.getIndex2()] = true;
-            matrix[d.getIndex2()][d.getIndex1()] = true; // duplicates are commutative
+        /*
+         * The idea is:
+         * If record A is duplicate of B, and B is duplicate of C,
+         * then A should also be duplicate of C.
+         *
+         * For this, we put connected duplicate records into the same group.
+         */
+
+        int[] group = new int[numberOfRecords];
+
+        // At the beginning every record is in its own group
+        for (int i = 0; i < numberOfRecords; i++) {
+            group[i] = i;
         }
 
-        // Warshall's algorithm: if i-k and k-j are connected, then i-j is connected
-        for (int k = 0; k < numRecords; k++) {
-            for (int i = 0; i < numRecords; i++) {
-                for (int j = 0; j < numRecords; j++) {
-                    if (matrix[i][k] && matrix[k][j]) {
-                        matrix[i][j] = true;
-                    }
-                }
-            }
+        // Merge the groups of all known duplicate pairs
+        for (Duplicate duplicate : duplicates) {
+            int firstRecord = duplicate.getIndex1();
+            int secondRecord = duplicate.getIndex2();
+
+            union(group, firstRecord, secondRecord);
         }
 
-        // read all connected pairs back out as duplicates (only i < j to avoid duplicates and identity)
-        for (int i = 0; i < numRecords; i++) {
-            for (int j = i + 1; j < numRecords; j++) {
-                if (matrix[i][j]) {
+        // Now all records that are in the same group are duplicates
+        for (int i = 0; i < numberOfRecords; i++) {
+            for (int j = i + 1; j < numberOfRecords; j++) {
+                if (find(group, i) == find(group, j)) {
                     closedDuplicates.add(new Duplicate(i, j, 1.0, relation));
                 }
             }
@@ -51,5 +57,22 @@ public class TransitiveClosure {
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         return closedDuplicates;
+    }
+
+    private int find(int[] group, int record) {
+        while (group[record] != record) {
+            record = group[record];
+        }
+
+        return record;
+    }
+
+    private void union(int[] group, int firstRecord, int secondRecord) {
+        int firstGroup = find(group, firstRecord);
+        int secondGroup = find(group, secondRecord);
+
+        if (firstGroup != secondGroup) {
+            group[secondGroup] = firstGroup;
+        }
     }
 }
