@@ -10,9 +10,6 @@ public class INDProfiler {
     public List<IND> profile(List<Relation> relations, boolean discoverNary) {
         List<IND> inclusionDependencies = new ArrayList<>();
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        //                                      DATA INTEGRATION ASSIGNMENT                                           //
-
         // pre-compute value sets for every column in every relation
         List<List<Set<String>>> allColumnSets = new ArrayList<>();
         for (Relation relation : relations) {
@@ -45,9 +42,7 @@ public class INDProfiler {
             }
         }
 
-        //                                                                                                            //
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+    
         if (discoverNary)
             throw new RuntimeException("Sorry, n-ary IND discovery is not supported by this solution.");
 

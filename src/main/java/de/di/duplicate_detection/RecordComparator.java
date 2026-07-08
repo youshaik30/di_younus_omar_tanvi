@@ -29,8 +29,6 @@ public class RecordComparator {
     public double compare(String[] tuple1, String[] tuple2) {
         double recordSimilarity = 0;
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        //                                      DATA INTEGRATION ASSIGNMENT                                           //
 
         // for each (attribute, measure, weight) triple, compute the attribute similarity
         // and add it to the total, weighted by its (already normalized) weight
@@ -42,8 +40,6 @@ public class RecordComparator {
             recordSimilarity += sim * asw.getWeight();
         }
 
-        //                                                                                                            //
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         return recordSimilarity;
     }

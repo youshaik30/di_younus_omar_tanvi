@@ -15,11 +15,7 @@ public class TransitiveClosure {
 
         Relation relation = duplicates.iterator().next().getRelation();
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        //                                      DATA INTEGRATION ASSIGNMENT                                           //
-
-        // give every record a group id; records in the same group are duplicates of each other
-        // start by giving each record its own group id (its own index)
+        
         Map<Integer, Integer> group = new HashMap<>();
         for (Duplicate d : duplicates) {
             if (!group.containsKey(d.getIndex1())) group.put(d.getIndex1(), d.getIndex1());

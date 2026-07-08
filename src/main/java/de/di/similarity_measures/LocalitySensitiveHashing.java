@@ -34,8 +34,6 @@ public class LocalitySensitiveHashing implements SimilarityMeasure {
         String[] signature1 = new String[k];
         String[] signature2 = new String[k];
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        //                                      DATA INTEGRATION ASSIGNMENT                                           //
 
         // apply each MinHash function to both token arrays to build the two signatures
         for (int i = 0; i < k; i++) {
@@ -52,9 +50,6 @@ public class LocalitySensitiveHashing implements SimilarityMeasure {
             }
         }
         lshJaccard = (k == 0) ? 0.0 : (double) matches / k;
-
-        //                                                                                                            //
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         return lshJaccard;
     }

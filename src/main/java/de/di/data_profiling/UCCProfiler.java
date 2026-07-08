@@ -25,11 +25,7 @@ public class UCCProfiler {
                 currentNonUniques.add(pli);
         }
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        //                                      DATA INTEGRATION ASSIGNMENT                                           //
-
-        // level-wise lattice traversal: combine PLIs level by level
-        // at each level, combine pairs that share the same prefix (Apriori principle)
+       
         while (!currentNonUniques.isEmpty()) {
             List<PositionListIndex> nextNonUniques = new ArrayList<>();
 
@@ -67,9 +63,6 @@ public class UCCProfiler {
 
             currentNonUniques = nextNonUniques;
         }
-
-        //                                                                                                            //
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         return uniques;
     }

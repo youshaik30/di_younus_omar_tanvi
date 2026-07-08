@@ -24,9 +24,6 @@ public class Levenshtein implements SimilarityMeasure {
         for (int i = 0; i <= string1.length(); i++)
             upperLine[i] = i;
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        //                                      DATA INTEGRATION ASSIGNMENT                                           //
-
         // edge case: both empty strings are the same
         if (string1.length() == 0 && string2.length() == 0) {
             levenshteinSimilarity = 1.0;
@@ -63,9 +60,6 @@ public class Levenshtein implements SimilarityMeasure {
             levenshteinSimilarity = 1.0 - (double) distance / maxLen;
         }
 
-        //                                                                                                            //
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
         return levenshteinSimilarity;
     }
 
@@ -80,8 +74,6 @@ public class Levenshtein implements SimilarityMeasure {
         for (int i = 0; i <= strings1.length; i++)
             upperLine[i] = i;
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        //                                      DATA INTEGRATION ASSIGNMENT                                           //
 
         // same algorithm as above, but compare tokens with .equals() instead of chars
         if (strings1.length == 0 && strings2.length == 0) {
@@ -115,9 +107,6 @@ public class Levenshtein implements SimilarityMeasure {
             int maxLen = Math.max(strings1.length, strings2.length);
             levenshteinSimilarity = 1.0 - (double) distance / maxLen;
         }
-
-        //                                                                                                            //
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         return levenshteinSimilarity;
     }

@@ -27,8 +27,6 @@ public class Jaccard implements SimilarityMeasure {
     public double calculate(String[] strings1, String[] strings2) {
         double jaccardSimilarity = 0;
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        //                                      DATA INTEGRATION ASSIGNMENT                                           //
 
         if (bagSemantics) {
             // BAG semantics: duplicates count
@@ -81,9 +79,6 @@ public class Jaccard implements SimilarityMeasure {
                 jaccardSimilarity = (double) intersect / unionSize;
             }
         }
-
-        //                                                                                                            //
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         return jaccardSimilarity;
     }

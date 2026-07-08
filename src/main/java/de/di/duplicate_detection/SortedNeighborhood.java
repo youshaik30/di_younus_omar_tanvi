@@ -27,33 +27,23 @@ public class SortedNeighborhood {
         for (int i = 0; i < relation.getRecords().length; i++)
             records[i] = new Record(i, relation.getRecords()[i]);
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        //                                      DATA INTEGRATION ASSIGNMENT                                           //
 
-        // do one Sorted Neighborhood run for each sorting key
-        for (int k = 0; k < sortingKeys.length; k++) {
-            final int key = sortingKeys[k];
+        for (int sortingKey : sortingKeys) {
+            Record[] sortedRecords = records.clone();
+            Arrays.sort(sortedRecords, Comparator.comparing(record -> record.getValues()[sortingKey]));
 
-            // sort the records by the value in the sorting key column
-            Record[] sorted = records.clone();
-            Arrays.sort(sorted, (r1, r2) -> r1.getValues()[key].compareTo(r2.getValues()[key]));
+            for (int i = 0; i < sortedRecords.length; i++) {
+                for (int j = i + 1; j < Math.min(i + windowSize, sortedRecords.length); j++) {
+                    Record record1 = sortedRecords[i];
+                    Record record2 = sortedRecords[j];
 
-            // slide a window over the sorted records and compare records inside the window
-            for (int i = 0; i < sorted.length; i++) {
-                for (int j = i + 1; j < i + windowSize && j < sorted.length; j++) {
-                    double sim = recordComparator.compare(sorted[i].getValues(), sorted[j].getValues());
-
-                    if (recordComparator.isDuplicate(sim)) {
-                        int idx1 = sorted[i].getIndex();
-                        int idx2 = sorted[j].getIndex();
-                        duplicates.add(new Duplicate(idx1, idx2, sim, relation));
-                    }
+                    double similarity = recordComparator.compare(record1.getValues(), record2.getValues());
+                    if (recordComparator.isDuplicate(similarity))
+                        duplicates.add(new Duplicate(record1.getIndex(), record2.getIndex(), similarity, relation));
                 }
             }
         }
 
-        //                                                                                                            //
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         return duplicates;
     }
@@ -62,22 +52,36 @@ public class SortedNeighborhood {
         List<AttrSimWeight> attrSimWeights = new ArrayList<>(relation.getAttributes().length);
         double threshold = 0.0;
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        //                                      DATA INTEGRATION ASSIGNMENT                                           //
 
-        // compare the meaningful text columns (skip column 0 because it is a unique id)
-        attrSimWeights.add(new AttrSimWeight(1, new Levenshtein(true), 0.1));
-        attrSimWeights.add(new AttrSimWeight(2, new Levenshtein(true), 0.1));
-        attrSimWeights.add(new AttrSimWeight(3, new Jaccard(new Tokenizer(3, true), false), 0.2));
-        attrSimWeights.add(new AttrSimWeight(4, new Levenshtein(true), 0.1));
-        attrSimWeights.add(new AttrSimWeight(5, new Levenshtein(true), 0.1));
-        attrSimWeights.add(new AttrSimWeight(6, new Jaccard(new Tokenizer(3, true), false), 0.1));
-        attrSimWeights.add(new AttrSimWeight(7, new Levenshtein(true), 0.1));
-        attrSimWeights.add(new AttrSimWeight(8, new Levenshtein(true), 0.2));
-        threshold = 0.8;
+        int numAttributes = relation.getAttributes().length;
+        String[][] columns = relation.getColumns();
+        int numRecords = relation.getRecords().length;
 
-        //                                                                                                            //
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      
+        List<Integer> usefulAttributes = new ArrayList<>();
+        for (int attribute = 2; attribute < numAttributes; attribute++) {
+            long nonEmpty = Arrays.stream(columns[attribute])
+                    .filter(v -> v != null && !v.isEmpty())
+                    .count();
+            double fillRate = (double) nonEmpty / numRecords;
+            if (fillRate >= 0.10)
+                usefulAttributes.add(attribute);
+        }
+
+        double weight = 1.0 / usefulAttributes.size();
+        for (int attribute : usefulAttributes) {
+            double averageLength = Arrays.stream(columns[attribute])
+                    .mapToInt(value -> value == null ? 0 : value.length())
+                    .average()
+                    .orElse(0);
+
+            if (averageLength > 15)
+                attrSimWeights.add(new AttrSimWeight(attribute, new Jaccard(new Tokenizer(3, true), false), weight));
+            else
+                attrSimWeights.add(new AttrSimWeight(attribute, new Levenshtein(true), weight));
+        }
+
+        threshold = 0.5;
 
         return new RecordComparator(attrSimWeights, threshold);
     }

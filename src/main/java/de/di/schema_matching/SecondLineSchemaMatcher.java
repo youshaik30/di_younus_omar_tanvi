@@ -11,9 +11,6 @@ public class SecondLineSchemaMatcher {
         int numTargets = simMatrix[0].length;
         int[][] corrMatrix = new int[numSources][numTargets];
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        //                                      DATA INTEGRATION ASSIGNMENT                                           //
-
         // global greedy: always pick the highest similarity pair not yet matched
         boolean[] usedSource = new boolean[numSources];
         boolean[] usedTarget = new boolean[numTargets];
@@ -43,9 +40,6 @@ public class SecondLineSchemaMatcher {
             usedSource[bestI] = true;
             usedTarget[bestJ] = true;
         }
-
-        //                                                                                                            //
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         return new CorrespondenceMatrix(corrMatrix, similarityMatrix.getSourceRelation(), similarityMatrix.getTargetRelation());
     }
