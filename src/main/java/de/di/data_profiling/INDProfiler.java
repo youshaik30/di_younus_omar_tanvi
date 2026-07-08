@@ -4,7 +4,6 @@ import de.di.Relation;
 import de.di.data_profiling.structures.IND;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class INDProfiler {
 
@@ -56,8 +55,12 @@ public class INDProfiler {
     }
 
     private List<Set<String>> toColumnSets(String[][] columns) {
-        return Arrays.stream(columns)
-                .map(column -> new HashSet<>(new ArrayList<>(List.of(column))))
-                .collect(Collectors.toList());
+        List<Set<String>> result = new ArrayList<>();
+        for (String[] col : columns) {
+            Set<String> s = new HashSet<>();
+            for (String v : col) s.add(v);
+            result.add(s);
+        }
+        return result;
     }
 }
